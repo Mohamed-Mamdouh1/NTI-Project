@@ -81,22 +81,23 @@ pipeline {
             }
         }
 
-        stage('Install kubectl (if missing)') {
-            steps {
-                echo '⚙️ Ensuring kubectl is installed...'
-                sh '''
-                    if ! command -v kubectl &> /dev/null; then
-                        echo "Installing kubectl..."
-                        curl -o kubectl -L "https://amazon-eks.s3.us-west-2.amazonaws.com/1.28.2/2024-04-12/bin/linux/amd64/kubectl"
-                        chmod +x kubectl
-                        sudo mv kubectl /usr/local/bin/
-                    else
-                        echo "✅ kubectl already installed."
-                    fi
-                '''
-                sh 'kubectl version --client || true'
-            }
-        }
+       stage('Install kubectl (if missing)') {
+    steps {
+        echo '⚙️ Ensuring kubectl is installed (no sudo)...'
+        sh '''
+            if ! command -v kubectl &> /dev/null; then
+                echo "Installing kubectl locally..."
+                curl -L -o ./kubectl "https://amazon-eks.s3.us-west-2.amazonaws.com/1.28.2/2024-04-12/bin/linux/amd64/kubectl"
+                chmod +x ./kubectl
+                export PATH=$PATH:$(pwd)
+            else
+                echo "✅ kubectl already installed."
+            fi
+
+            ./kubectl version --client || kubectl version --client || true
+        '''
+    }
+}
 
         stage('Deploy to EKS') {
             steps {
