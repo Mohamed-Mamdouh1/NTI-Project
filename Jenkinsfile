@@ -79,31 +79,31 @@ pipeline {
             }
         }
 
-        stage('Deploy to EKS') {
-            steps {
-                echo '🚀 Deploying to EKS cluster...'
-                withAWS(region: "${AWS_REGION}", credentials: 'b6099f18-364e-4ac5-b366-3801c0bad854') {
-                    sh '''
-                        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+//         stage('Deploy to EKS') {
+//             steps {
+//                 echo '🚀 Deploying to EKS cluster...'
+//                 withAWS(region: "${AWS_REGION}", credentials: 'b6099f18-364e-4ac5-b366-3801c0bad854') {
+//                     sh '''
+//                         aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
 
-                        kubectl apply -f ./api/manifests/
-                        kubectl apply -f ./web/manifests/
-                        kubectl apply -f ./worker/manifests/
+//                         kubectl apply -f ./api/manifests/
+//                         kubectl apply -f ./web/manifests/
+//                         kubectl apply -f ./worker/manifests/
 
-                        kubectl get pods -A
-                    '''
-                }
-            }
-        }
-    }
+//                         kubectl get pods -A
+//                     '''
+//                 }
+//             }
+//         }
+//     }
 
-    post {
-        success {
-            echo '✅ Deployment completed successfully!'
-        }
-        failure {
-            echo '❌ Deployment failed. Check Jenkins logs for details.'
-        }
-    }
-}
+//     post {
+//         success {
+//             echo '✅ Deployment completed successfully!'
+//         }
+//         failure {
+//             echo '❌ Deployment failed. Check Jenkins logs for details.'
+//         }
+//     }
+// }
 
