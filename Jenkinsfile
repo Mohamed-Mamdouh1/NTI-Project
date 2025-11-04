@@ -43,24 +43,28 @@ pipeline {
         stage('Authenticate to AWS ECR') {
             steps {
                 echo '🔐 Logging in to AWS ECR...'
-                sh '''
-                    aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-                '''
+                withAWS(region: "${AWS_REGION}", credentials: 'aws-creds') {
+                    sh '''
+                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                    '''
+                }
             }
         }
 
         stage('Tag & Push to ECR') {
             steps {
                 echo '📤 Pushing Docker images to ECR...'
-                sh '''
-                    docker tag $REPO_NAME-web:latest $ECR_URL-web:$IMAGE_TAG
-                    docker tag $REPO_NAME-api:latest $ECR_URL-api:$IMAGE_TAG
-                    docker tag $REPO_NAME-worker:latest $ECR_URL-worker:$IMAGE_TAG
+                withAWS(region: "${AWS_REGION}", credentials: 'aws-creds') {
+                    sh '''
+                        docker tag $REPO_NAME-web:latest $ECR_URL-web:$IMAGE_TAG
+                        docker tag $REPO_NAME-api:latest $ECR_URL-api:$IMAGE_TAG
+                        docker tag $REPO_NAME-worker:latest $ECR_URL-worker:$IMAGE_TAG
 
-                    docker push $ECR_URL-web:$IMAGE_TAG
-                    docker push $ECR_URL-api:$IMAGE_TAG
-                    docker push $ECR_URL-worker:$IMAGE_TAG
-                '''
+                        docker push $ECR_URL-web:$IMAGE_TAG
+                        docker push $ECR_URL-api:$IMAGE_TAG
+                        docker push $ECR_URL-worker:$IMAGE_TAG
+                    '''
+                }
             }
         }
 
@@ -78,15 +82,17 @@ pipeline {
         stage('Deploy to EKS') {
             steps {
                 echo '🚀 Deploying to EKS cluster...'
-                sh '''
-                    aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+                withAWS(region: "${AWS_REGION}", credentials: '	b6099f18-364e-4ac5-b366-3801c0bad854') {
+                    sh '''
+                        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
 
-                    kubectl apply -f ./api/manifests/
-                    kubectl apply -f ./web/manifests/
-                    kubectl apply -f ./worker/manifests/
+                        kubectl apply -f ./api/manifests/
+                        kubectl apply -f ./web/manifests/
+                        kubectl apply -f ./worker/manifests/
 
-                    kubectl get pods -A
-                '''
+                        kubectl get pods -A
+                    '''
+                }
             }
         }
     }
@@ -100,3 +106,4 @@ pipeline {
         }
     }
 }
+
