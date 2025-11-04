@@ -45,9 +45,7 @@ pipeline {
                 echo '🔐 Logging in to AWS ECR...'
                 withAWS(region: "${AWS_REGION}", credentials: 'b6099f18-364e-4ac5-b366-3801c0bad854') {
                     sh '''
-                        aws ecr get-login-password --region $AWS_REGION | \
-                        docker login --username AWS --password-stdin \
-                        $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
                     '''
                 }
             }
@@ -81,36 +79,37 @@ pipeline {
             }
         }
 
-       stage('Install kubectl (if missing)') {
-    steps {
-        echo '⚙️ Ensuring kubectl is installed (no sudo)...'
-        sh '''
-            if ! command -v kubectl &> /dev/null; then
-                echo "Installing kubectl locally..."
-                curl -L -o ./kubectl "https://amazon-eks.s3.us-west-2.amazonaws.com/1.28.2/2024-04-12/bin/linux/amd64/kubectl"
-                chmod +x ./kubectl
-                export PATH=$PATH:$(pwd)
-            else
-                echo "✅ kubectl already installed."
-            fi
+        stage('Install kubectl (if missing)') {
+            steps {
+                echo '⚙️ Ensuring kubectl is installed (no sudo)...'
+                sh '''
+                    if ! command -v kubectl &> /dev/null; then
+                        echo "Installing kubectl locally..."
+                        curl -L -o ./kubectl "https://amazon-eks.s3.us-west-2.amazonaws.com/1.28.2/2024-04-12/bin/linux/amd64/kubectl"
+                        chmod +x ./kubectl
+                        export PATH=$PATH:$(pwd)
+                    else
+                        echo "✅ kubectl already installed."
+                    fi
 
-            ./kubectl version --client || kubectl version --client || true
-        '''
-    }
-}
+                    ./kubectl version --client || kubectl version --client || true
+                '''
+            }
+        }
 
         stage('Deploy to EKS') {
             steps {
                 echo '🚀 Deploying to EKS cluster...'
                 withAWS(region: "${AWS_REGION}", credentials: 'b6099f18-364e-4ac5-b366-3801c0bad854') {
                     sh '''
+                        export PATH=$PATH:$(pwd)
                         aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
 
-                        kubectl apply -f ./api/manifests/
-                        kubectl apply -f ./web/manifests/
-                        kubectl apply -f ./worker/manifests/
+                        ./kubectl apply -f ./api/manifests/
+                        ./kubectl apply -f ./web/manifests/
+                        ./kubectl apply -f ./worker/manifests/
 
-                        kubectl get pods -A
+                        ./kubectl get pods -A
                     '''
                 }
             }
@@ -120,6 +119,9 @@ pipeline {
     post {
         success {
             echo '✅ Deployment completed successfully!'
+        }
+        failure {
+            echo '❌ Deployment failed. Check Jenkins logs for details.'
         }
     }
 }
