@@ -43,7 +43,7 @@ pipeline {
         stage('Authenticate to AWS ECR') {
             steps {
                 echo '🔐 Logging in to AWS ECR...'
-                withAWS(region: "${AWS_REGION}", credentials: 'aws-creds') {
+                withAWS(region: "${AWS_REGION}", credentials: 'b6099f18-364e-4ac5-b366-3801c0bad854') {
                     sh '''
                         aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
                     '''
@@ -54,7 +54,7 @@ pipeline {
         stage('Tag & Push to ECR') {
             steps {
                 echo '📤 Pushing Docker images to ECR...'
-                withAWS(region: "${AWS_REGION}", credentials: 'aws-creds') {
+                withAWS(region: "${AWS_REGION}", credentials: 'b6099f18-364e-4ac5-b366-3801c0bad854') {
                     sh '''
                         docker tag $REPO_NAME-web:latest $ECR_URL-web:$IMAGE_TAG
                         docker tag $REPO_NAME-api:latest $ECR_URL-api:$IMAGE_TAG
@@ -82,7 +82,7 @@ pipeline {
         stage('Deploy to EKS') {
             steps {
                 echo '🚀 Deploying to EKS cluster...'
-                withAWS(region: "${AWS_REGION}", credentials: '	b6099f18-364e-4ac5-b366-3801c0bad854') {
+                withAWS(region: "${AWS_REGION}", credentials: 'b6099f18-364e-4ac5-b366-3801c0bad854') {
                     sh '''
                         aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
 
