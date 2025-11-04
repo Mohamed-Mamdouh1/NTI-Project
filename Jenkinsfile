@@ -97,7 +97,24 @@ pipeline {
             }
         }
 
-   
+       stage('Deploy to EKS') {
+            steps {
+                echo '🚀 Deploying to EKS cluster...'
+                withAWS(region: "${AWS_REGION}", credentials: 'b6099f18-364e-4ac5-b366-3801c0bad854') {
+                    // sh '''
+                    //     export PATH=$PATH:$(pwd)
+                    //     aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+
+                    //     ./kubectl apply -f ./api/manifests/
+                    //     ./kubectl apply -f ./web/manifests/
+                    //     ./kubectl apply -f ./worker/manifests/
+
+                    //     ./kubectl get pods -A
+                    // '''
+                }
+            }
+        }
+    } 
 
     post {
         success {
