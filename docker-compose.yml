@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:alpine
+    restart: always
+
+  database:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_DB: webapp
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  worker:
+    build:
+      context: ./worker
+    depends_on:
+      - redis
+      - database
+    environment:
+      REDIS_HOST: redis
+      PGHOST: database
+      PGUSER: user
+      PGPASSWORD: password
+      PGDATABASE: webapp
+
+  result:
+    build:
+      context: ./result
+    depends_on:
+      - database
+    ports:
+      - "5001:80"  # adjust as needed
+    environment:
+      PGHOST: database
+      PGUSER: user
+      PGPASSWORD: password
+      PGDATABASE: webapp
+
+  api:
+    build:
+      context: ./api
+    depends_on:
+      - redis
+    environment:
+      REDIS_HOST: redis
+      PGHOST: database
+      PGUSER: user
+      PGPASSWORD: password
+      PGDATABASE: webapp
+    ports:
+      - "8000:8080"
+
+  web:
+    build:
+      context: ./web
+    depends_on:
+      - api
+      - result
+    ports:
+      - "80:80"
+
+volumes:
+  db-data:
